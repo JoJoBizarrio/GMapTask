@@ -4,31 +4,28 @@ using GMap.NET.WindowsForms;
 using GMap.NET;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Data.SqlClient;
-using System.Drawing;
-using System.Linq;
+using System.Windows.Forms;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace GMapTask
 {
     public partial class Form1 : Form
     {
-        private GMapMarker _currentMarker;
-        private SqlConnection _mySqlConnection;
-        private Dictionary<int, GMapMarker> _keyValuePairs = new Dictionary<int, GMapMarker>();
+        private GMapMarker _currentMarker; //текущий перетаскиваемый маркер
+
+        private Dictionary<int, GMapMarker> _idGMapMarkerPairs = new Dictionary<int, GMapMarker>(); // Коллекция сопоставляющая id-Marker
 
         public Form1()
         {
             InitializeComponent();
+
             GMaps.Instance.Mode = AccessMode.ServerAndCache; //выбор подгрузки карты – онлайн или из ресурсов
             MyGMapControl.MapProvider = GoogleMapProvider.Instance; //какой провайдер карт используется (в нашем случае гугл) 
             MyGMapControl.MinZoom = 2; //минимальный зум
             MyGMapControl.MaxZoom = 16; //максимальный зум
-            MyGMapControl.Zoom = 4; // какой используется зум при открытии
+            MyGMapControl.Zoom = 2; // какой используется зум при открытии
             MyGMapControl.Position = new PointLatLng(66.4169575018027, 94.25025752215694);// точка в центре карты при открытии (центр России)
             MyGMapControl.MouseWheelZoomType = MouseWheelZoomType.MousePositionAndCenter; // как приближает (просто в центр карты или по положению мыши)
             MyGMapControl.CanDragMap = true; // перетаскивание карты мышью
@@ -39,25 +36,16 @@ namespace GMapTask
             MyGMapControl.MouseMove += MyGMapControl_MouseMove;
             MyGMapControl.OnMarkerEnter += MyGMapControl_OnMarkerEnter;
             MyGMapControl.OnMarkerLeave += MyGMapControl_OnMarkerLeave;
-            _mySqlConnection = new SqlConnection("Data Source=DESKTOP-61HUL4I;Initial Catalog=VehiclesPositions;Integrated Security=True");
-            GetMarkersByTSQL();
-            GMapOverlay gMapOverlayWithMarkersByTSQL = new GMapOverlay();
-
-            foreach (int id in _keyValuePairs.Keys)
-            {
-                gMapOverlayWithMarkersByTSQL.Markers.Add(_keyValuePairs[id]);
-            }
-
-            MyGMapControl.Overlays.Add(gMapOverlayWithMarkersByTSQL);
-            MyGMapControl.Update();
             FormClosed += Form1_FormClosed;
-        }
 
+            Task task = SetOverlayWithMarkersFromTSQLAsync(); // как не создавать лишний экземпляр?
+            MyGMapControl.Update();
+        }
 
         // События
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
-            UpdateMarkersPositionsInTSQL();
+            Task task = UpdateMarkersPositionsInTSQL(); // как не создавать лишний экземпляр?
         }
 
         private void MyGMapControl_OnMarkerEnter(GMapMarker item)
@@ -87,44 +75,48 @@ namespace GMapTask
             }
         }
 
-        // кусок работает с TSQL
-        async private void GetMarkersByTSQL()
+        // асинхронно
+        async private Task SetOverlayWithMarkersFromTSQLAsync()
         {
-            using (_mySqlConnection = new SqlConnection("Data Source=DESKTOP-61HUL4I;Initial Catalog=VehiclesPositions;Integrated Security=True"))
+            GMapOverlay gMapOverlayWithMarkersByTSQL = new GMapOverlay();
+            MyGMapControl.Overlays.Add(gMapOverlayWithMarkersByTSQL);
+
+            using (SqlConnection MySqlConnection = new SqlConnection("Data Source=DESKTOP-61HUL4I;Initial Catalog=VehiclesPositions;Integrated Security=True"))
             {
-                _mySqlConnection.Open();
-                SqlCommand sqlCommand = new SqlCommand("SELECT * FROM VehiclesPositions", _mySqlConnection);
-                SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
+                await MySqlConnection.OpenAsync();
+                SqlCommand sqlCommand = new SqlCommand("SELECT * FROM VehiclesPositions", MySqlConnection);
+                SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync();
 
                 if (sqlDataReader.HasRows)
                 {
-                    for (int i = 0; sqlDataReader.Read(); i++)
+                    for (int i = 0; await sqlDataReader.ReadAsync(); i++)
                     {
-                        _keyValuePairs.Add
-                            (Convert.ToInt32(sqlDataReader[0]),
-                            new GMarkerGoogle(
-                                new PointLatLng(Convert.ToDouble(sqlDataReader[1]), Convert.ToDouble(sqlDataReader[2])), GMarkerGoogleType.green));
+                        GMapMarker gMapMarker = new GMarkerGoogle(new PointLatLng(Convert.ToDouble(sqlDataReader[1]), Convert.ToDouble(sqlDataReader[2])), GMarkerGoogleType.purple_dot);
+                        _idGMapMarkerPairs.Add(Convert.ToInt32(sqlDataReader[0]), gMapMarker);
+                        gMapOverlayWithMarkersByTSQL.Markers.Add(gMapMarker);
                     }
                 }
             }
         }
 
-        async private void UpdateMarkersPositionsInTSQL()
+        async private Task UpdateMarkersPositionsInTSQL()
         {
-            // _mySqlConnection = new SqlConnection("Data Source=DESKTOP-61HUL4I;Initial Catalog=VehiclesPositions;Integrated Security=True");
-
-            using (_mySqlConnection = new SqlConnection("Data Source=DESKTOP-61HUL4I;Initial Catalog=VehiclesPositions;Integrated Security=True"))
+            using (SqlConnection MySqlConnection = new SqlConnection("Data Source=DESKTOP-61HUL4I;Initial Catalog=VehiclesPositions;Integrated Security=True"))
             {
-                _mySqlConnection.Open();
+                await MySqlConnection.OpenAsync();
+                StringBuilder cmdTextStringBuilder = new StringBuilder();
 
-                foreach (int id in _keyValuePairs.Keys)
+                foreach (int id in _idGMapMarkerPairs.Keys)
                 {
-                    GMapMarker gMapMarker = _keyValuePairs[id];
+                    GMapMarker gMapMarker = _idGMapMarkerPairs[id];
                     string latString = gMapMarker.Position.Lat.ToString().Replace(',', '.');
                     string lngString = gMapMarker.Position.Lng.ToString().Replace(',', '.');
-                    SqlCommand sqlCommand = new SqlCommand($"UPDATE VehiclesPositions SET Latitude={latString}, Longitude={lngString} WHERE Id={id}", _mySqlConnection);
-                    sqlCommand.ExecuteNonQuery();
+
+                    cmdTextStringBuilder.AppendLine($"UPDATE VehiclesPositions SET Latitude={latString}, Longitude={lngString} WHERE Id={id};");
                 }
+
+                SqlCommand sqlCommand = new SqlCommand(cmdTextStringBuilder.ToString(), MySqlConnection);
+                await sqlCommand.ExecuteNonQueryAsync();
             }
         }
     }
