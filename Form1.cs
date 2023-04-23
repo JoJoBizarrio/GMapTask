@@ -15,7 +15,7 @@ namespace GMapTask
     {
         private GMapMarker _currentMarker; //текущий перетаскиваемый маркер
 
-        private Dictionary<int, GMapMarker> _keyValuePairs = new Dictionary<int, GMapMarker>(); // Коллекция сопоставляющая id-Marker
+        private Dictionary<int, GMapMarker> _idGMapMarkerPairs = new Dictionary<int, GMapMarker>(); // Коллекция сопоставляющая id-Marker
 
         public Form1()
         {
@@ -38,8 +38,8 @@ namespace GMapTask
             MyGMapControl.OnMarkerLeave += MyGMapControl_OnMarkerLeave;
             FormClosed += Form1_FormClosed;
 
-            Task task = SetOverlayWithMarkersByTSQLAsync(); // как не создавать лишний экземпляр?
-            MyGMapControl.Update(); 
+            Task task = SetOverlayWithMarkersFromTSQLAsync(); // как не создавать лишний экземпляр?
+            MyGMapControl.Update();
         }
 
         // События
@@ -76,7 +76,7 @@ namespace GMapTask
         }
 
         // асинхронно
-        async private Task SetOverlayWithMarkersByTSQLAsync()
+        async private Task SetOverlayWithMarkersFromTSQLAsync()
         {
             GMapOverlay gMapOverlayWithMarkersByTSQL = new GMapOverlay();
             MyGMapControl.Overlays.Add(gMapOverlayWithMarkersByTSQL);
@@ -92,7 +92,7 @@ namespace GMapTask
                     for (int i = 0; await sqlDataReader.ReadAsync(); i++)
                     {
                         GMapMarker gMapMarker = new GMarkerGoogle(new PointLatLng(Convert.ToDouble(sqlDataReader[1]), Convert.ToDouble(sqlDataReader[2])), GMarkerGoogleType.purple_dot);
-                        _keyValuePairs.Add(Convert.ToInt32(sqlDataReader[0]), gMapMarker);
+                        _idGMapMarkerPairs.Add(Convert.ToInt32(sqlDataReader[0]), gMapMarker);
                         gMapOverlayWithMarkersByTSQL.Markers.Add(gMapMarker);
                     }
                 }
@@ -106,9 +106,9 @@ namespace GMapTask
                 await MySqlConnection.OpenAsync();
                 StringBuilder cmdTextStringBuilder = new StringBuilder();
 
-                foreach (int id in _keyValuePairs.Keys)
+                foreach (int id in _idGMapMarkerPairs.Keys)
                 {
-                    GMapMarker gMapMarker = _keyValuePairs[id];
+                    GMapMarker gMapMarker = _idGMapMarkerPairs[id];
                     string latString = gMapMarker.Position.Lat.ToString().Replace(',', '.');
                     string lngString = gMapMarker.Position.Lng.ToString().Replace(',', '.');
 
