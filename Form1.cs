@@ -6,9 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Windows.Forms;
-using System.Threading.Tasks;
-using System.Threading;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace GMapTask
 {
@@ -39,14 +38,14 @@ namespace GMapTask
             MyGMapControl.OnMarkerLeave += MyGMapControl_OnMarkerLeave;
             FormClosed += Form1_FormClosed;
 
-            SetOverlayWithMarkersByTSQLAsync();
-            MyGMapControl.Update();
+            Task task = SetOverlayWithMarkersByTSQLAsync(); // как не создавать лишний экземпляр?
+            MyGMapControl.Update(); 
         }
 
         // События
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
-            UpdateMarkersPositionsInTSQL();
+            Task task = UpdateMarkersPositionsInTSQL(); // как не создавать лишний экземпляр?
         }
 
         private void MyGMapControl_OnMarkerEnter(GMapMarker item)
@@ -77,7 +76,7 @@ namespace GMapTask
         }
 
         // асинхронно
-        async private void SetOverlayWithMarkersByTSQLAsync()
+        async private Task SetOverlayWithMarkersByTSQLAsync()
         {
             GMapOverlay gMapOverlayWithMarkersByTSQL = new GMapOverlay();
             MyGMapControl.Overlays.Add(gMapOverlayWithMarkersByTSQL);
@@ -100,7 +99,7 @@ namespace GMapTask
             }
         }
 
-        async private void UpdateMarkersPositionsInTSQL()
+        async private Task UpdateMarkersPositionsInTSQL()
         {
             using (SqlConnection MySqlConnection = new SqlConnection("Data Source=DESKTOP-61HUL4I;Initial Catalog=VehiclesPositions;Integrated Security=True"))
             {
