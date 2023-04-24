@@ -38,14 +38,14 @@ namespace GMapTask
             MyGMapControl.OnMarkerLeave += MyGMapControl_OnMarkerLeave;
             FormClosed += Form1_FormClosed;
 
-            Task task = SetOverlayWithMarkersFromTSQLAsync(); // как не создавать лишний экземпляр?
+            _ = SetOverlayWithMarkersFromTSQLAsync(); // компилятор посовтевал заместо 'Task task =' сделать через '_ =' . И че это такое?
             MyGMapControl.Update();
         }
 
         // События
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Task task = UpdateMarkersPositionsInTSQL(); // как не создавать лишний экземпляр?
+            _ = UpdateMarkersPositionsInTSQL(); // компилятор посовтевал заместо 'Task task =' сделать через '_ =' . И че это такое?
         }
 
         private void MyGMapControl_OnMarkerEnter(GMapMarker item)
@@ -86,7 +86,7 @@ namespace GMapTask
                 await MySqlConnection.OpenAsync();
                 SqlCommand sqlCommand = new SqlCommand("SELECT * FROM VehiclesPositions", MySqlConnection);
                 SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync();
-
+                
                 if (sqlDataReader.HasRows)
                 {
                     for (int i = 0; await sqlDataReader.ReadAsync(); i++)
