@@ -2,12 +2,14 @@
 using GMap.NET.WindowsForms.Markers;
 using GMap.NET.WindowsForms;
 using GMap.NET;
+
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Windows.Forms;
 using System.Text;
 using System.Threading.Tasks;
+
 
 namespace GMapTask
 {
@@ -38,14 +40,15 @@ namespace GMapTask
             MyGMapControl.OnMarkerLeave += MyGMapControl_OnMarkerLeave;
             FormClosed += Form1_FormClosed;
 
-            Task task = SetOverlayWithMarkersFromTSQLAsync(); // как не создавать лишний экземпляр?
+            _ = SetOverlaysWithMarkersAsync();
+
             MyGMapControl.Update();
         }
 
         // События
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Task task = UpdateMarkersPositionsInTSQL(); // как не создавать лишний экземпляр?
+            _ = DataShuttle.UpdateMarkersPositionsInServerAsync(_idGMapMarkerPairs);
         }
 
         private void MyGMapControl_OnMarkerEnter(GMapMarker item)
@@ -76,7 +79,7 @@ namespace GMapTask
         }
 
         // асинхронно
-        async private Task SetOverlayWithMarkersFromTSQLAsync()
+        async private Task SetOverlayWithMarkersFromServerAsync()
         {
             GMapOverlay gMapOverlayWithMarkersByTSQL = new GMapOverlay();
             MyGMapControl.Overlays.Add(gMapOverlayWithMarkersByTSQL);
@@ -99,7 +102,7 @@ namespace GMapTask
             }
         }
 
-        async private Task UpdateMarkersPositionsInTSQL()
+        async private Task UpdateMarkersPositionsInServerAsync()
         {
             using (SqlConnection MySqlConnection = new SqlConnection("Data Source=DESKTOP-61HUL4I;Initial Catalog=VehiclesPositions;Integrated Security=True"))
             {
@@ -118,6 +121,24 @@ namespace GMapTask
                 SqlCommand sqlCommand = new SqlCommand(cmdTextStringBuilder.ToString(), MySqlConnection);
                 await sqlCommand.ExecuteNonQueryAsync();
             }
+        }
+
+        async private Task SetOverlaysWithMarkersAsync()
+        {
+            Task task = DataShuttle.GetMarkersFromServerAsync();
+            task.Wait();
+            GMapOverlay gMapOverlayWithMarkersByTSQL = new GMapOverlay();
+
+            if (task.IsCompleted)
+            {
+                foreach (int id in _idGMapMarkerPairs.Keys)
+                {
+                    gMapOverlayWithMarkersByTSQL.Markers.Add(_idGMapMarkerPairs[id]);
+                }
+            }
+
+
+            MyGMapControl.Overlays.Add(gMapOverlayWithMarkersByTSQL);
         }
     }
 }
