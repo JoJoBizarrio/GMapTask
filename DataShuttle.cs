@@ -7,6 +7,10 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
+using System.ComponentModel.DataAnnotations;
+using System.CodeDom.Compiler;
+using Microsoft.SqlServer.Server;
 
 namespace GMapTask
 {
@@ -55,6 +59,52 @@ namespace GMapTask
                 SqlCommand sqlCommand = new SqlCommand(cmdTextStringBuilder.ToString(), MySqlConnection);
                 await sqlCommand.ExecuteNonQueryAsync();
             }
+        }
+
+        async static public Task<List<PointLatLng>> GetPositionsFromGPS()
+        {
+            List<PointLatLng> pointLatLngsList = new List<PointLatLng>();
+
+            using (StreamReader streamReader = new StreamReader($"{Environment.CurrentDirectory}\\GPS\\output.nmea"))
+            {
+                string currentLine;
+                string temp;
+                int index;
+                string[] array = new string[6];
+
+                while ((currentLine = await streamReader.ReadLineAsync()) != null)
+                {
+                    temp = currentLine;
+
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        index = temp.IndexOf(',');
+                        array[i] = temp.Remove(index);
+                        temp = temp.Substring(index+2);
+                    }
+
+                    string latString = array[2];
+                    string lngString = array[4];
+                    int latSign = 1;
+                    int lngSign = 1;
+
+                    if (array[3] != "N")
+                    {
+                        latSign = -1;
+                    }
+
+                    if (array[5] != "E")
+                    {
+                        lngSign = -1;
+                    }
+
+                    double lat = latSign * (Convert.ToDouble(latString.Remove(2)) + Convert.ToDouble(latString.Substring(2, 2)) / 60);
+                    double lng = lngSign * (Convert.ToDouble(lngString.Remove(3)) + Convert.ToDouble(lngString.Substring(3, 2)) / 60);
+                    pointLatLngsList.Add(new PointLatLng(lat, lng));
+                }
+            }
+
+            return pointLatLngsList;
         }
     }
 }
