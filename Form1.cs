@@ -5,6 +5,7 @@ using GMap.NET;
 using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Threading.Tasks;
+using GMap.NET.WindowsForms.Markers;
 
 namespace GMapTask
 {
@@ -36,6 +37,7 @@ namespace GMapTask
             FormClosed += Form1_FormClosed;
 
             _ = SetOverlayWithMarkersAsync();
+            _ = AutoMarker();
         }
 
         // События
@@ -83,6 +85,21 @@ namespace GMapTask
             }
 
             MyGMapControl.Overlays.Add(gMapOverlayWithMarkersByTSQL);
+        }
+
+        async private Task AutoMarker()
+        {
+            List<PointLatLng> way = await DataShuttle.GetPositionsFromGPS();
+            GMarkerGoogle autoMarker = new GMarkerGoogle(new PointLatLng(0, 0), GMarkerGoogleType.gray_small);
+            GMapOverlay overlay = new GMapOverlay();
+            overlay.Markers.Add(autoMarker);
+            MyGMapControl.Overlays.Add(overlay);
+
+            foreach (PointLatLng e in way)
+            {
+                autoMarker.Position = e;
+                await Task.Delay(2000);
+            }
         }
     }
 }
