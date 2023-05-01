@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace GMapTask
@@ -16,6 +13,7 @@ namespace GMapTask
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+
             Form1 form1 = new Form1();
             Markers markers = new Markers();
             Presenter presenter = new Presenter(form1, markers);

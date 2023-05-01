@@ -1,7 +1,7 @@
 ﻿using GMap.NET;
 using GMap.NET.WindowsForms;
+
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace GMapTask
@@ -16,7 +16,7 @@ namespace GMapTask
         {
             _view = view;
             _markers = markers;
-            //_ = _markers.LoadMarkers();
+
             _view.MarkerEnter += View_MarkerEnter;
             _view.MarkerLeave += View_MarkerLeave;
             _view.GMapControl_MouseMove += View_GMapControl_MouseMove;
