@@ -2,19 +2,13 @@
 using GMap.NET.WindowsForms;
 using GMap.NET;
 
-using System.Collections.Generic;
+using System;
 using System.Windows.Forms;
-using System.Threading.Tasks;
-using GMap.NET.WindowsForms.Markers;
 
 namespace GMapTask
 {
-    public partial class Form1 : Form
+    public partial class Form1 : Form, IGMapView
     {
-        private GMapMarker _currentMarker; //текущий перетаскиваемый маркер
-
-        private Dictionary<int, GMapMarker> _idGMapMarkerPairs = new Dictionary<int, GMapMarker>(); // Коллекция сопоставляющая id-Marker
-
         public Form1()
         {
             InitializeComponent();
@@ -30,76 +24,69 @@ namespace GMapTask
             MyGMapControl.DragButton = MouseButtons.Left; // какой кнопкой осуществляется перетаскивание
             MyGMapControl.ShowCenter = false; //показывать или скрывать красный крестик в центре
             MyGMapControl.ShowTileGridLines = true; //показывать или скрывать тайлы
-
-            MyGMapControl.MouseMove += MyGMapControl_MouseMove;
-            MyGMapControl.OnMarkerEnter += MyGMapControl_OnMarkerEnter;
-            MyGMapControl.OnMarkerLeave += MyGMapControl_OnMarkerLeave;
-            FormClosed += Form1_FormClosed;
-
-            _ = SetOverlayWithMarkersAsync();
-            _ = AutoMarker();
         }
 
         // События
-        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            _ = DataShuttle.UpdateMarkersPositionsInServerAsync(_idGMapMarkerPairs);
-        }
-
+        public event MarkerEnter MarkerEnter;
         private void MyGMapControl_OnMarkerEnter(GMapMarker item)
         {
-            if (_currentMarker == null)
+            if (MarkerEnter != null)
             {
-                _currentMarker = item;
+                MarkerEnter(item);
             }
         }
 
+        public event MarkerLeave MarkerLeave;
         private void MyGMapControl_OnMarkerLeave(GMapMarker item)
         {
-            if (_currentMarker == item)
+            if (MarkerLeave != null)
             {
-                _currentMarker = null;
+                MarkerLeave(item);
             }
         }
 
-        private void MyGMapControl_MouseMove(object sender, MouseEventArgs e)
+        public event MouseEventHandler GMapControl_MouseMove;
+        private void MyGMapMarker_MouseMove(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Left && _currentMarker != null)
+            if (GMapControl_MouseMove != null)
             {
-                PointLatLng point = MyGMapControl.FromLocalToLatLng(e.X, e.Y);
-                _currentMarker.Position = point;
-                // Вывод координат маркера в подсказке
-                _currentMarker.ToolTipText = string.Format("{0},{1}", point.Lat, point.Lng);
+                GMapControl_MouseMove(this, e);
             }
         }
 
-        // асинхронно
-        async private Task SetOverlayWithMarkersAsync()
+        public event EventHandler<EventArgs> GMapControl_Load;
+        private void MyGMapControl_Load(object sender, EventArgs e)
         {
-            GMapOverlay gMapOverlayWithMarkersByTSQL = new GMapOverlay();
-            _idGMapMarkerPairs = await DataShuttle.GetMarkersFromServerAsync();
-
-            foreach (int id in _idGMapMarkerPairs.Keys)
+            if (GMapControl_Load != null)
             {
-                gMapOverlayWithMarkersByTSQL.Markers.Add(_idGMapMarkerPairs[id]);
+                GMapControl_Load(this, EventArgs.Empty);
             }
-
-            MyGMapControl.Overlays.Add(gMapOverlayWithMarkersByTSQL);
         }
 
-        async private Task AutoMarker()
+        public event EventHandler<EventArgs> MainWindow_Closed;
+        private void Form1_Closed(object sender, FormClosedEventArgs e)
         {
-            List<PointLatLng> way = await DataShuttle.GetPositionsFromGPS();
-            GMarkerGoogle autoMarker = new GMarkerGoogle(new PointLatLng(0, 0), GMarkerGoogleType.gray_small);
-            GMapOverlay overlay = new GMapOverlay();
-            overlay.Markers.Add(autoMarker);
-            MyGMapControl.Overlays.Add(overlay);
-
-            foreach (PointLatLng e in way)
+            if (MainWindow_Closed != null)
             {
-                autoMarker.Position = e;
-                await Task.Delay(2000);
+                MainWindow_Closed(this, EventArgs.Empty);
             }
+        }
+
+        // Методы
+        public PointLatLng FromLocalToLatLng(int X, int Y)
+        {
+            return MyGMapControl.FromLocalToLatLng(X, Y);
+        }
+
+        public void SetOverlayWithMarkers(GMapOverlay gMapOverlay)
+        {
+            MyGMapControl.Overlays.Add(gMapOverlay);
+
+            MyGMapControl.ReloadMap();
+            MyGMapControl.Refresh();
+
+            MyGMapControl.Zoom *= 2;
+            MyGMapControl.Zoom /= 2;
         }
     }
 }

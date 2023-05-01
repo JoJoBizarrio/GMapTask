@@ -58,6 +58,10 @@
             this.MyGMapControl.Size = new System.Drawing.Size(800, 450);
             this.MyGMapControl.TabIndex = 0;
             this.MyGMapControl.Zoom = 0D;
+            this.MyGMapControl.OnMarkerEnter += new GMap.NET.WindowsForms.MarkerEnter(this.MyGMapControl_OnMarkerEnter);
+            this.MyGMapControl.OnMarkerLeave += new GMap.NET.WindowsForms.MarkerLeave(this.MyGMapControl_OnMarkerLeave);
+            this.MyGMapControl.Load += new System.EventHandler(this.MyGMapControl_Load);
+            this.MyGMapControl.MouseMove += new System.Windows.Forms.MouseEventHandler(this.MyGMapMarker_MouseMove);
             // 
             // Form1
             // 
@@ -67,6 +71,7 @@
             this.Controls.Add(this.MyGMapControl);
             this.Name = "Form1";
             this.Text = "Form1";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_Closed);
             this.ResumeLayout(false);
 
         }
