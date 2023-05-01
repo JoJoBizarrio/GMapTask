@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.MyGMapControl = new GMap.NET.WindowsForms.GMapControl();
+            this.LoadMarkers_Button = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // MyGMapControl
@@ -59,11 +60,21 @@
             this.MyGMapControl.TabIndex = 0;
             this.MyGMapControl.Zoom = 0D;
             // 
+            // LoadMarkers_Button
+            // 
+            this.LoadMarkers_Button.Location = new System.Drawing.Point(71, 392);
+            this.LoadMarkers_Button.Name = "LoadMarkers_Button";
+            this.LoadMarkers_Button.Size = new System.Drawing.Size(105, 23);
+            this.LoadMarkers_Button.TabIndex = 1;
+            this.LoadMarkers_Button.Text = "Load markers";
+            this.LoadMarkers_Button.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.LoadMarkers_Button);
             this.Controls.Add(this.MyGMapControl);
             this.Name = "Form1";
             this.Text = "Form1";
@@ -74,5 +85,6 @@
         #endregion
 
         private GMap.NET.WindowsForms.GMapControl MyGMapControl;
+        private System.Windows.Forms.Button LoadMarkers_Button;
     }
 }
