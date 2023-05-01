@@ -1,6 +1,8 @@
-﻿using GMap.NET.WindowsForms;
+﻿using GMap.NET;
+using GMap.NET.WindowsForms;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace GMapTask
 {
@@ -17,20 +19,31 @@ namespace GMapTask
             //_ = _markers.LoadMarkers();
             _view.MarkerEnter += View_MarkerEnter;
             _view.MarkerLeave += View_MarkerLeave;
-            _view.LoadMarkers_Click += View_LoadMarkers_Click;
+            _view.GMapControl_MouseMove += View_GMapControl_MouseMove;
+            _view.GMapControl_Load += View_GMapControl_Load;
+            _view.MainWindow_Closed += View_MainWindow_Closed;
         }
 
-        async private void View_LoadMarkers_Click(object sender, System.EventArgs e)
+        async private void View_MainWindow_Closed(object sender, System.EventArgs e)
+        {
+            await _markers.SaveMarkers(); 
+        }
+
+        private void View_GMapControl_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left && _markers.CurrentMarker != null)
+            {
+                PointLatLng point = _view.FromLocalToLatLng(e.X, e.Y);
+                _markers.CurrentMarker.Position = point;
+                _markers.CurrentMarker.ToolTipText = string.Format("{0},{1}", point.Lat, point.Lng);
+            }
+        }
+
+        async private void View_GMapControl_Load(object sender, System.EventArgs e)
         {
             await _markers.LoadMarkers();
             SetOverlayWithMarkers(_markers.IdMarkerPairs);
         }
-
-        //async private void View_GMapLoad(object sender, System.EventArgs e)
-        //{
-        //    await _markers.LoadMarkers();
-        //    SetOverlayWithMarkers(_markers.IdMarkerPairs);
-        //}
 
         private void SetOverlayWithMarkers(Dictionary<int, GMapMarker> idMarkerPairs)
         {
@@ -42,12 +55,6 @@ namespace GMapTask
             }
 
             _view.SetOverlayWithMarkers(gMapOverlay);
-        }
-
-        async private Task LoadMarkers()
-        {
-            //Task markers = _markers.LoadMarkers();
-            //_view.
         }
 
         private void View_MarkerEnter(GMapMarker item)

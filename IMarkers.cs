@@ -14,5 +14,6 @@ namespace GMapTask
         GMapMarker CurrentMarker { get; set; }
 
         Task LoadMarkers();
+        Task SaveMarkers();
     }
 }
