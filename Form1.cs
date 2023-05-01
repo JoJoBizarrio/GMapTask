@@ -9,21 +9,14 @@ namespace GMapTask
 {
     public partial class Form1 : Form, IGMapView
     {
+        public GMapControl GMapControl { get; private set; }
+
         public Form1()
         {
             InitializeComponent();
 
+            GMapControl = MyGMapControl;
             GMaps.Instance.Mode = AccessMode.ServerAndCache; //выбор подгрузки карты – онлайн или из ресурсов
-            MyGMapControl.MapProvider = GoogleMapProvider.Instance; //какой провайдер карт используется (в нашем случае гугл) 
-            MyGMapControl.MinZoom = 2; //минимальный зум
-            MyGMapControl.MaxZoom = 16; //максимальный зум
-            MyGMapControl.Zoom = 2; // какой используется зум при открытии
-            MyGMapControl.Position = new PointLatLng(66.4169575018027, 94.25025752215694);// точка в центре карты при открытии (центр России)
-            MyGMapControl.MouseWheelZoomType = MouseWheelZoomType.MousePositionAndCenter; // как приближает (просто в центр карты или по положению мыши)
-            MyGMapControl.CanDragMap = true; // перетаскивание карты мышью
-            MyGMapControl.DragButton = MouseButtons.Left; // какой кнопкой осуществляется перетаскивание
-            MyGMapControl.ShowCenter = false; //показывать или скрывать красный крестик в центре
-            MyGMapControl.ShowTileGridLines = true; //показывать или скрывать тайлы
         }
 
         // События
@@ -73,11 +66,6 @@ namespace GMapTask
         }
 
         // Методы
-        public PointLatLng FromLocalToLatLng(int X, int Y)
-        {
-            return MyGMapControl.FromLocalToLatLng(X, Y);
-        }
-
         public void SetOverlayWithMarkers(GMapOverlay gMapOverlay)
         {
             MyGMapControl.Overlays.Add(gMapOverlay);

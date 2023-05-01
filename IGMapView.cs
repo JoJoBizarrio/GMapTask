@@ -8,6 +8,8 @@ namespace GMapTask
 {
     public interface IGMapView
     {
+        GMapControl GMapControl { get; }
+
         event EventHandler<EventArgs> GMapControl_Load;
 
         event EventHandler<EventArgs> MainWindow_Closed;
@@ -19,7 +21,5 @@ namespace GMapTask
         event MouseEventHandler GMapControl_MouseMove;
 
         void SetOverlayWithMarkers(GMapOverlay gMapOverlay);
-
-        PointLatLng FromLocalToLatLng(int X, int Y);
     }
 }
