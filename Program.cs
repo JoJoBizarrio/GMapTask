@@ -16,7 +16,7 @@ namespace GMapTask
 
             Form1 form1 = new Form1();
             Markers markers = new Markers();
-            Presenter presenter = new Presenter(form1, markers);
+            _ = new Presenter(form1, markers);
             Application.Run(form1);
         }
     }
