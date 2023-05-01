@@ -1,9 +1,11 @@
 ﻿using GMap.NET;
 using GMap.NET.WindowsForms;
 using GMap.NET.WindowsForms.Markers;
+
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -15,9 +17,12 @@ namespace GMapTask
 
         public GMapMarker CurrentMarker { get; set; }
 
+        public GMarkerGoogle AutoMarker { get; }
+
         public Markers()
         {
             IdMarkerPairs = new Dictionary<int, GMapMarker>();
+            AutoMarker = new GMarkerGoogle(new PointLatLng(0, 0), GMarkerGoogleType.arrow);
         }
 
         async public Task LoadMarkers()
@@ -58,6 +63,53 @@ namespace GMapTask
                 SqlCommand sqlCommand = new SqlCommand(cmdTextStringBuilder.ToString(), MySqlConnection);
                 await sqlCommand.ExecuteNonQueryAsync();
             }
+        }
+
+        async public Task GetPositionFromGPSAsync()
+        {
+            string lastLine;
+
+            using (StreamReader streamReader = new StreamReader($"{Environment.CurrentDirectory}\\GPS\\output.nmea"))
+            {
+                string allLines = await streamReader.ReadToEndAsync();
+                lastLine = allLines.Substring(allLines.LastIndexOf('\n') + 2);
+            }
+
+            AutoMarker.Position = GetPointLatLngFromMessageGPGGA(lastLine);
+        }
+
+        private PointLatLng GetPointLatLngFromMessageGPGGA(string messageGPGGA)
+        {
+            string temp = messageGPGGA;
+            string[] array = new string[6];
+            int index;
+
+            for (int i = 0; i < array.Length; i++)
+            {
+                index = temp.IndexOf(',');
+                array[i] = temp.Remove(index);
+                temp = temp.Substring(index + 2);
+            }
+
+            string latString = array[2];
+            string lngString = array[4];
+            int latSign = 1;
+            int lngSign = 1;
+
+            if (array[3] != "N")
+            {
+                latSign = -1;
+            }
+
+            if (array[5] != "E")
+            {
+                lngSign = -1;
+            }
+
+            double lat = latSign * (Convert.ToDouble(latString.Remove(2)) + Convert.ToDouble(latString.Substring(2, 2)) / 60);
+            double lng = lngSign * (Convert.ToDouble(lngString.Remove(3)) + Convert.ToDouble(lngString.Substring(3, 2)) / 60);
+
+            return new PointLatLng(lat, lng);
         }
     }
 }
