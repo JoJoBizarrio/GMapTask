@@ -1,123 +1,80 @@
 ﻿using GMap.NET.MapProviders;
-using GMap.NET.WindowsForms.Markers;
 using GMap.NET.WindowsForms;
 using GMap.NET;
+
 using System;
-using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Windows.Forms;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GMapTask
 {
-    public partial class Form1 : Form
+    public partial class Form1 : Form, IGMapView
     {
-        private GMapMarker _currentMarker; //текущий перетаскиваемый маркер
-
-        private Dictionary<int, GMapMarker> _idGMapMarkerPairs = new Dictionary<int, GMapMarker>(); // Коллекция сопоставляющая id-Marker
+        public GMapControl GMapControl { get; private set; }
 
         public Form1()
         {
             InitializeComponent();
 
+            GMapControl = MyGMapControl;
             GMaps.Instance.Mode = AccessMode.ServerAndCache; //выбор подгрузки карты – онлайн или из ресурсов
-            MyGMapControl.MapProvider = GoogleMapProvider.Instance; //какой провайдер карт используется (в нашем случае гугл) 
-            MyGMapControl.MinZoom = 2; //минимальный зум
-            MyGMapControl.MaxZoom = 16; //максимальный зум
-            MyGMapControl.Zoom = 2; // какой используется зум при открытии
-            MyGMapControl.Position = new PointLatLng(66.4169575018027, 94.25025752215694);// точка в центре карты при открытии (центр России)
-            MyGMapControl.MouseWheelZoomType = MouseWheelZoomType.MousePositionAndCenter; // как приближает (просто в центр карты или по положению мыши)
-            MyGMapControl.CanDragMap = true; // перетаскивание карты мышью
-            MyGMapControl.DragButton = MouseButtons.Left; // какой кнопкой осуществляется перетаскивание
-            MyGMapControl.ShowCenter = false; //показывать или скрывать красный крестик в центре
-            MyGMapControl.ShowTileGridLines = true; //показывать или скрывать тайлы
-
-            MyGMapControl.MouseMove += MyGMapControl_MouseMove;
-            MyGMapControl.OnMarkerEnter += MyGMapControl_OnMarkerEnter;
-            MyGMapControl.OnMarkerLeave += MyGMapControl_OnMarkerLeave;
-            FormClosed += Form1_FormClosed;
-
-            Task task = SetOverlayWithMarkersFromTSQLAsync(); // как не создавать лишний экземпляр?
-            MyGMapControl.Update();
         }
 
         // События
-        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            Task task = UpdateMarkersPositionsInTSQL(); // как не создавать лишний экземпляр?
-        }
-
+        public event MarkerEnter MarkerEnter;
         private void MyGMapControl_OnMarkerEnter(GMapMarker item)
         {
-            if (_currentMarker == null)
+            if (MarkerEnter != null)
             {
-                _currentMarker = item;
+                MarkerEnter(item);
             }
         }
 
+        public event MarkerLeave MarkerLeave;
         private void MyGMapControl_OnMarkerLeave(GMapMarker item)
         {
-            if (_currentMarker == item)
+            if (MarkerLeave != null)
             {
-                _currentMarker = null;
+                MarkerLeave(item);
             }
         }
 
-        private void MyGMapControl_MouseMove(object sender, MouseEventArgs e)
+        public event MouseEventHandler GMapControl_MouseMove;
+        private void MyGMapMarker_MouseMove(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Left && _currentMarker != null)
+            if (GMapControl_MouseMove != null)
             {
-                PointLatLng point = MyGMapControl.FromLocalToLatLng(e.X, e.Y);
-                _currentMarker.Position = point;
-                // Вывод координат маркера в подсказке
-                _currentMarker.ToolTipText = string.Format("{0},{1}", point.Lat, point.Lng);
+                GMapControl_MouseMove(this, e);
             }
         }
 
-        // асинхронно
-        async private Task SetOverlayWithMarkersFromTSQLAsync()
+        public event EventHandler<EventArgs> GMapControl_Load;
+        private void MyGMapControl_Load(object sender, EventArgs e)
         {
-            GMapOverlay gMapOverlayWithMarkersByTSQL = new GMapOverlay();
-            MyGMapControl.Overlays.Add(gMapOverlayWithMarkersByTSQL);
-
-            using (SqlConnection MySqlConnection = new SqlConnection("Data Source=DESKTOP-61HUL4I;Initial Catalog=VehiclesPositions;Integrated Security=True"))
+            if (GMapControl_Load != null)
             {
-                await MySqlConnection.OpenAsync();
-                SqlCommand sqlCommand = new SqlCommand("SELECT * FROM VehiclesPositions", MySqlConnection);
-                SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync();
-
-                if (sqlDataReader.HasRows)
-                {
-                    for (int i = 0; await sqlDataReader.ReadAsync(); i++)
-                    {
-                        GMapMarker gMapMarker = new GMarkerGoogle(new PointLatLng(Convert.ToDouble(sqlDataReader[1]), Convert.ToDouble(sqlDataReader[2])), GMarkerGoogleType.purple_dot);
-                        _idGMapMarkerPairs.Add(Convert.ToInt32(sqlDataReader[0]), gMapMarker);
-                        gMapOverlayWithMarkersByTSQL.Markers.Add(gMapMarker);
-                    }
-                }
+                GMapControl_Load(this, EventArgs.Empty);
             }
         }
 
-        async private Task UpdateMarkersPositionsInTSQL()
+        public event EventHandler<EventArgs> MainWindow_Closed;
+        private void Form1_Closed(object sender, FormClosedEventArgs e)
         {
-            using (SqlConnection MySqlConnection = new SqlConnection("Data Source=DESKTOP-61HUL4I;Initial Catalog=VehiclesPositions;Integrated Security=True"))
+            if (MainWindow_Closed != null)
             {
-                await MySqlConnection.OpenAsync();
-                StringBuilder cmdTextStringBuilder = new StringBuilder();
-
-                foreach (int id in _idGMapMarkerPairs.Keys)
-                {
-                    GMapMarker gMapMarker = _idGMapMarkerPairs[id];
-                    string latString = gMapMarker.Position.Lat.ToString().Replace(',', '.');
-                    string lngString = gMapMarker.Position.Lng.ToString().Replace(',', '.');
-
-                    cmdTextStringBuilder.AppendLine($"UPDATE VehiclesPositions SET Latitude={latString}, Longitude={lngString} WHERE Id={id};");
-                }
-
-                SqlCommand sqlCommand = new SqlCommand(cmdTextStringBuilder.ToString(), MySqlConnection);
-                await sqlCommand.ExecuteNonQueryAsync();
+                MainWindow_Closed(this, EventArgs.Empty);
             }
+        }
+
+        // Методы
+        public void SetOverlayWithMarkers(GMapOverlay gMapOverlay)
+        {
+            MyGMapControl.Overlays.Add(gMapOverlay);
+
+            MyGMapControl.ReloadMap();
+            MyGMapControl.Refresh();
+
+            MyGMapControl.Zoom *= 2;
+            MyGMapControl.Zoom /= 2;
         }
     }
 }
