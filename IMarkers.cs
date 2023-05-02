@@ -12,11 +12,14 @@ namespace GMapTask
     public interface IMarkers
     {
         Dictionary<int, GMapMarker> IdMarkerPairs { get; }
+        GMapMarker AutoMarker { get; }
+        GMapPolygon Polygon { get; }
         GMapMarker CurrentMarker { get; set; }
-        GMarkerGoogle AutoMarker { get; }
 
         Task LoadMarkers();
         Task SaveMarkers();
-        Task GetPositionFromGPSAsync();
+        Task GetPositionFromGpsAsync();
+
+        void AddNewMarker(GMapMarker marker);
     }
 }

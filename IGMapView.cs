@@ -8,8 +8,6 @@ namespace GMapTask
 {
     public interface IGMapView
     {
-        GMapControl GMapControl { get; }
-
         event EventHandler<EventArgs> GMapControl_Load;
 
         event EventHandler<EventArgs> MainWindow_Closed;
@@ -18,8 +16,19 @@ namespace GMapTask
 
         event MarkerLeave MarkerLeave;
 
+        event EventHandler<EventArgs> ScriptActions_RadioButtonCheckedChanged;
+
         event MouseEventHandler GMapControl_MouseMove;
 
-        void SetOverlayWithMarkers(GMapOverlay gMapOverlay);
+        GMapOverlay MarkersOverlay { get; set; }
+        bool IsDialogBox { get; }
+        bool IsMarkerColor { get; }
+        bool IsNewMarker { get; }
+
+        void SetInitialParameters();
+        void AddOverlay(GMapOverlay gMapOverlay);
+        PointLatLng GetFromLocalToLatLng(int X, int Y);
+        void ShowDialogBox();
+        RectLatLng GetViewArea();
     }
 }
