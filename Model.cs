@@ -9,20 +9,31 @@ using System.Drawing;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace GMapTask
 {
-    internal class Markers : IMarkers
+    internal class Model : IModel
     {
+        public GMapOverlay MarkersOverlay { get; }
+        public GMapOverlay PolygonsOverlay { get; }
+        public GMapOverlay AutoMarkerOverlay { get; }
+
         public Dictionary<int, GMapMarker> IdMarkerPairs { get; }
         public GMapPolygon Polygon { get; }
         public GMapMarker AutoMarker { get; }
         public GMapMarker CurrentMarker { get; set; }
 
-        public Markers()
+        private static Random _random { get; set; }
+        private readonly Array _gMarkerGoogleTypesArray;
+
+        public Model()
         {
             IdMarkerPairs = new Dictionary<int, GMapMarker>();
+
             AutoMarker = new GMarkerGoogle(new PointLatLng(0, 0), GMarkerGoogleType.arrow);
+            AutoMarkerOverlay = new GMapOverlay();
+            AutoMarkerOverlay.Markers.Add(AutoMarker);
 
             List<PointLatLng> pointLatLngs = new List<PointLatLng>()
             {
@@ -32,8 +43,14 @@ namespace GMapTask
                 new PointLatLng(60, 30),
             };
 
+            PolygonsOverlay = new GMapOverlay();
             Polygon = new GMapPolygon(pointLatLngs, "Square");
+            PolygonsOverlay.Polygons.Add(Polygon);
+
+            MarkersOverlay = new GMapOverlay();
             
+            _random = new Random();
+            _gMarkerGoogleTypesArray = Enum.GetValues(typeof(GMarkerGoogleType));
         }
 
         async public Task LoadMarkers()
@@ -48,10 +65,10 @@ namespace GMapTask
                 {
                     for (int i = 0; await sqlDataReader.ReadAsync(); i++)
                     {
-                        IdMarkerPairs.Add(
-                            Convert.ToInt32(sqlDataReader[0]),
-                            new GMarkerGoogle(
-                                new PointLatLng(Convert.ToDouble(sqlDataReader[1]), Convert.ToDouble(sqlDataReader[2])), GMarkerGoogleType.purple_dot));
+                        GMapMarker gMapMarker = new GMarkerGoogle(
+                            new PointLatLng(Convert.ToDouble(sqlDataReader[1]), Convert.ToDouble(sqlDataReader[2])), GMarkerGoogleType.purple_dot);
+                        MarkersOverlay.Markers.Add(gMapMarker);
+                        IdMarkerPairs.Add(Convert.ToInt32(sqlDataReader[0]), gMapMarker);
                     }
                 }
             }
@@ -125,22 +142,39 @@ namespace GMapTask
             return new PointLatLng(lat, lng);
         }
 
-        async public void AddNewMarker(GMapMarker marker)
+        async public Task AddNewMarkerInsideViewArea(RectLatLng viewArea)
         {
+            double lat = viewArea.Bottom + _random.NextDouble() * viewArea.HeightLat;
+            double lng = viewArea.Left + _random.NextDouble() * viewArea.WidthLng;
+
+            GMapMarker gMapMarker = new GMarkerGoogle(new PointLatLng(lat, lng), GMarkerGoogleType.purple);
+            MarkersOverlay.Markers.Add(gMapMarker);
+
             using (SqlConnection MySqlConnection = new SqlConnection("Data Source=DESKTOP-61HUL4I;Initial Catalog=VehiclesPositions;Integrated Security=True"))
             {
                 await MySqlConnection.OpenAsync();
-                string latString = marker.Position.Lat.ToString().Replace(',', '.');
-                string lngString = marker.Position.Lng.ToString().Replace(',', '.');
+                string latString = lat.ToString().Replace(',', '.');
+                string lngString = lng.ToString().Replace(',', '.');
                 string commandInsert = $"INSERT INTO VehiclesPositions (Latitude, Longitude) VALUES ({latString}, {lngString});";
                 SqlCommand sqlCommand = new SqlCommand(commandInsert, MySqlConnection);
                 await sqlCommand.ExecuteNonQueryAsync();
             }
         }
 
-        public void ChangeMarker(GMapMarker gMapMarker)
+        public void ChangeMarkerColor()
         {
+            int typeIndex = _random.Next(1, _gMarkerGoogleTypesArray.Length);
 
+            MarkersOverlay.Markers.Remove(CurrentMarker);
+            CurrentMarker = new GMarkerGoogle(
+                new PointLatLng(CurrentMarker.Position.Lat, CurrentMarker.Position.Lng), (GMarkerGoogleType)_gMarkerGoogleTypesArray.GetValue(typeIndex));
+            MarkersOverlay.Markers.Add(CurrentMarker);
+        }
+
+        public void UpdateCurrentMarker(PointLatLng point)
+        {
+            CurrentMarker.Position = point;
+            CurrentMarker.ToolTipText = string.Format("{0},{1}", point.Lat, point.Lng);
         }
     }
 }

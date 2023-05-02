@@ -20,7 +20,6 @@ namespace GMapTask
 
         event MouseEventHandler GMapControl_MouseMove;
 
-        GMapOverlay MarkersOverlay { get; set; }
         bool IsDialogBox { get; }
         bool IsMarkerColor { get; }
         bool IsNewMarker { get; }
