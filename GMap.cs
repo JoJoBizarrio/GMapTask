@@ -7,15 +7,13 @@ using System.Windows.Forms;
 
 namespace GMapTask
 {
-    public partial class Form1 : Form, IGMapView
+    public partial class GMap : Form, IGMapView
     {
-        public GMapOverlay MarkersOverlay { get; set; }
-
         public bool IsDialogBox => DialogBox_RadioButton.Checked;
         public bool IsMarkerColor => MarkerColor_RadioButton.Checked;
         public bool IsNewMarker => NewMarker_RadioButton.Checked;
 
-        public Form1()
+        public GMap()
         {
             InitializeComponent();
         }

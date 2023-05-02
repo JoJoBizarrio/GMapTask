@@ -14,10 +14,10 @@ namespace GMapTask
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            Form1 form1 = new Form1();
-            Markers markers = new Markers();
-            _ = new Presenter(form1, markers);
-            Application.Run(form1);
+            GMap gMap = new GMap();
+            Model model = new Model();
+            _ = new Presenter(gMap, model);
+            Application.Run(gMap);
         }
     }
 }
