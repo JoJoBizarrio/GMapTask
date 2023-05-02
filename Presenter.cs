@@ -1,6 +1,4 @@
-﻿using GMap.NET;
-using GMap.NET.WindowsForms;
-using GMap.NET.WindowsForms.Markers;
+﻿using GMap.NET.WindowsForms;
 
 using System;
 using System.Threading;
