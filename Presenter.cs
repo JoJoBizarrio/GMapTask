@@ -16,7 +16,7 @@ namespace GMapTask
 
         private static System.Threading.Timer _timer { get; set; }
         private static Random _random { get; set; }
-        private readonly Array _gMarkerGoogleTypesArray;
+        private readonly Array _gMarkerGoogleTypesArray = Enum.GetValues(typeof(GMarkerGoogleType));
         private bool _executeScriptAction { get; set; }
 
         public Presenter(IGMapView view, IMarkers markers)
@@ -34,7 +34,6 @@ namespace GMapTask
 
             _timer = new System.Threading.Timer(new TimerCallback(UpdateAutoMarker), null, 2000, 3000);
             _random = new Random();
-            _gMarkerGoogleTypesArray = Enum.GetValues(typeof(GMarkerGoogleType));
 
             _executeScriptAction = true;
         }
