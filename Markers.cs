@@ -5,6 +5,7 @@ using GMap.NET.WindowsForms.Markers;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Drawing;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,15 +15,25 @@ namespace GMapTask
     internal class Markers : IMarkers
     {
         public Dictionary<int, GMapMarker> IdMarkerPairs { get; }
-
+        public GMapPolygon Polygon { get; }
+        public GMapMarker AutoMarker { get; }
         public GMapMarker CurrentMarker { get; set; }
-
-        public GMarkerGoogle AutoMarker { get; }
 
         public Markers()
         {
             IdMarkerPairs = new Dictionary<int, GMapMarker>();
             AutoMarker = new GMarkerGoogle(new PointLatLng(0, 0), GMarkerGoogleType.arrow);
+
+            List<PointLatLng> pointLatLngs = new List<PointLatLng>()
+            {
+                new PointLatLng(30, 30),
+                new PointLatLng(30, 60),
+                new PointLatLng(60, 60),
+                new PointLatLng(60, 30),
+            };
+
+            Polygon = new GMapPolygon(pointLatLngs, "Square");
+            
         }
 
         async public Task LoadMarkers()
@@ -37,8 +48,10 @@ namespace GMapTask
                 {
                     for (int i = 0; await sqlDataReader.ReadAsync(); i++)
                     {
-                        GMapMarker gMapMarker = new GMarkerGoogle(new PointLatLng(Convert.ToDouble(sqlDataReader[1]), Convert.ToDouble(sqlDataReader[2])), GMarkerGoogleType.purple_dot);
-                        IdMarkerPairs.Add(Convert.ToInt32(sqlDataReader[0]), gMapMarker);
+                        IdMarkerPairs.Add(
+                            Convert.ToInt32(sqlDataReader[0]),
+                            new GMarkerGoogle(
+                                new PointLatLng(Convert.ToDouble(sqlDataReader[1]), Convert.ToDouble(sqlDataReader[2])), GMarkerGoogleType.purple_dot));
                     }
                 }
             }
@@ -65,7 +78,7 @@ namespace GMapTask
             }
         }
 
-        async public Task GetPositionFromGPSAsync()
+        async public Task GetPositionFromGpsAsync()
         {
             string lastLine;
 
@@ -75,12 +88,12 @@ namespace GMapTask
                 lastLine = allLines.Substring(allLines.LastIndexOf('\n') + 2);
             }
 
-            AutoMarker.Position = GetPointLatLngFromMessageGPGGA(lastLine);
+            AutoMarker.Position = GetPointLatLngFromGpggaMessage(lastLine);
         }
 
-        private PointLatLng GetPointLatLngFromMessageGPGGA(string messageGPGGA)
+        private PointLatLng GetPointLatLngFromGpggaMessage(string GpggaMessage)
         {
-            string temp = messageGPGGA;
+            string temp = GpggaMessage;
             string[] array = new string[6];
             int index;
 
@@ -110,6 +123,24 @@ namespace GMapTask
             double lng = lngSign * (Convert.ToDouble(lngString.Remove(3)) + Convert.ToDouble(lngString.Substring(3, 2)) / 60);
 
             return new PointLatLng(lat, lng);
+        }
+
+        async public void AddNewMarker(GMapMarker marker)
+        {
+            using (SqlConnection MySqlConnection = new SqlConnection("Data Source=DESKTOP-61HUL4I;Initial Catalog=VehiclesPositions;Integrated Security=True"))
+            {
+                await MySqlConnection.OpenAsync();
+                string latString = marker.Position.Lat.ToString().Replace(',', '.');
+                string lngString = marker.Position.Lng.ToString().Replace(',', '.');
+                string commandInsert = $"INSERT INTO VehiclesPositions (Latitude, Longitude) VALUES ({latString}, {lngString});";
+                SqlCommand sqlCommand = new SqlCommand(commandInsert, MySqlConnection);
+                await sqlCommand.ExecuteNonQueryAsync();
+            }
+        }
+
+        public void ChangeMarker(GMapMarker gMapMarker)
+        {
+
         }
     }
 }
