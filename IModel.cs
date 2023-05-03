@@ -11,8 +11,6 @@ namespace GMapTask
         GMapOverlay MarkersOverlay { get; }
         GMapOverlay PolygonsOverlay { get; }
         GMapOverlay AutoMarkerOverlay { get; }
-        Dictionary<int, GMapMarker> IdMarkerPairs { get; }
-        GMapMarker AutoMarker { get; }
         GMapPolygon Polygon { get; }
         GMapMarker CurrentMarker { get; set; }
 
