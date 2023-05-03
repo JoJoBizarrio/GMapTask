@@ -40,7 +40,7 @@ namespace GMapTask
 
         async private void UpdateAutoMarker(object obj)
         {
-            await _model.GetPositionFromGpsAsync();
+            await _model.UpdateAutomarkerPositionFromGpsAsync();
         }
 
         async private void View_GMapControl_MouseMove(object sender, MouseEventArgs e)

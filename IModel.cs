@@ -17,7 +17,7 @@ namespace GMapTask
         void UpdateCurrentMarker(PointLatLng point);
         Task LoadMarkers();
         Task SaveMarkers();
-        Task GetPositionFromGpsAsync();
+        Task UpdateAutomarkerPositionFromGpsAsync();
         void ChangeMarkerColor();
         Task AddNewMarkerInsideViewArea(RectLatLng viewArea);
     }

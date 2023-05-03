@@ -94,7 +94,7 @@ namespace GMapTask
             }
         }
 
-        async public Task GetPositionFromGpsAsync()
+        async public Task UpdateAutomarkerPositionFromGpsAsync()
         {
             string lastLine;
 
@@ -152,9 +152,11 @@ namespace GMapTask
             using (SqlConnection MySqlConnection = new SqlConnection("Data Source=DESKTOP-61HUL4I;Initial Catalog=VehiclesPositions;Integrated Security=True"))
             {
                 await MySqlConnection.OpenAsync();
+
                 string latString = lat.ToString().Replace(',', '.');
                 string lngString = lng.ToString().Replace(',', '.');
                 string commandInsert = $"INSERT INTO VehiclesPositions (Latitude, Longitude) VALUES ({latString}, {lngString});";
+
                 SqlCommand sqlCommand = new SqlCommand(commandInsert, MySqlConnection);
                 await sqlCommand.ExecuteNonQueryAsync();
             }
@@ -165,8 +167,11 @@ namespace GMapTask
             int typeIndex = Random.Next(1, _gMarkerGoogleTypesArray.Length);
 
             MarkersOverlay.Markers.Remove(CurrentMarker);
+
             CurrentMarker = new GMarkerGoogle(
-                new PointLatLng(CurrentMarker.Position.Lat, CurrentMarker.Position.Lng), (GMarkerGoogleType)_gMarkerGoogleTypesArray.GetValue(typeIndex));
+                new PointLatLng(CurrentMarker.Position.Lat, CurrentMarker.Position.Lng), 
+                (GMarkerGoogleType)_gMarkerGoogleTypesArray.GetValue(typeIndex));
+
             MarkersOverlay.Markers.Add(CurrentMarker);
         }
 
