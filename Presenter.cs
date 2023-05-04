@@ -12,8 +12,8 @@ namespace GMapTask
 
         private readonly IModel _model;
 
-        private static System.Threading.Timer _timer { get; set; }
-        private bool _executeScriptAction { get; set; }
+        private static System.Threading.Timer Timer { get; set; }
+        private bool ExecuteScriptAction { get; set; }
 
         public Presenter(IGMapView view, IModel model)
         {
@@ -28,19 +28,19 @@ namespace GMapTask
             _view.ScriptActions_RadioButtonCheckedChanged += View_ScriptActions_RadioButtonCheckedChanged;
             _view.SetInitialParameters();
 
-            _timer = new System.Threading.Timer(new TimerCallback(UpdateAutoMarker), null, 2000, 3000);
-
-            _executeScriptAction = true;
+            Timer = new System.Threading.Timer(new TimerCallback(UpdateAutoMarker), null, 2000, 3000);
+            
+            ExecuteScriptAction = true;
         }
 
         private void View_ScriptActions_RadioButtonCheckedChanged(object sender, EventArgs e)
         {
-            _executeScriptAction = true;
+            ExecuteScriptAction = true;
         }
 
         async private void UpdateAutoMarker(object obj)
         {
-            await _model.GetPositionFromGpsAsync();
+            await _model.UpdateAutomarkerPositionFromGpsAsync();
         }
 
         async private void View_GMapControl_MouseMove(object sender, MouseEventArgs e)
@@ -49,7 +49,7 @@ namespace GMapTask
             {
                 _model.UpdateCurrentMarker(_view.GetFromLocalToLatLng(e.X, e.Y));
 
-                if (_model.Polygon.IsInside(_model.CurrentMarker.Position) && _executeScriptAction)
+                if (_model.Polygon.IsInside(_model.CurrentMarker.Position) && ExecuteScriptAction)
                 {
                     if (_view.IsDialogBox)
                     {
@@ -65,7 +65,7 @@ namespace GMapTask
                         await _model.AddNewMarkerInsideViewArea(_view.GetViewArea());
                     }
 
-                    _executeScriptAction = false;
+                    ExecuteScriptAction = false;
                 }
             }
         }
