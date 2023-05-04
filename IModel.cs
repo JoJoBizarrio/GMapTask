@@ -11,15 +11,13 @@ namespace GMapTask
         GMapOverlay MarkersOverlay { get; }
         GMapOverlay PolygonsOverlay { get; }
         GMapOverlay AutoMarkerOverlay { get; }
-        Dictionary<int, GMapMarker> IdMarkerPairs { get; }
-        GMapMarker AutoMarker { get; }
         GMapPolygon Polygon { get; }
         GMapMarker CurrentMarker { get; set; }
 
         void UpdateCurrentMarker(PointLatLng point);
         Task LoadMarkers();
         Task SaveMarkers();
-        Task GetPositionFromGpsAsync();
+        Task UpdateAutomarkerPositionFromGpsAsync();
         void ChangeMarkerColor();
         Task AddNewMarkerInsideViewArea(RectLatLng viewArea);
     }
