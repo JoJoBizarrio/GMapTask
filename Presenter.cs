@@ -72,7 +72,7 @@ namespace GMapTask
 
         async private void View_GMapControl_Load(object sender, EventArgs e)
         {
-            await _model.LoadMarkers();
+            await _model.LoadMarkersAsync();
 
             _view.AddOverlay(_model.MarkersOverlay);
             _view.AddOverlay(_model.AutoMarkerOverlay);
@@ -80,7 +80,7 @@ namespace GMapTask
         }
         async private void View_MainWindow_Closed(object sender, EventArgs e)
         {
-            await _model.SaveMarkers();
+            await _model.SaveMarkersAsync();
         }
 
         private void View_MarkerEnter(GMapMarker item)
