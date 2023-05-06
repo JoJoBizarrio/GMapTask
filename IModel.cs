@@ -15,8 +15,8 @@ namespace GMapTask
         GMapMarker CurrentMarker { get; set; }
 
         void UpdateCurrentMarker(PointLatLng point);
-        Task LoadMarkers();
-        Task SaveMarkers();
+        Task LoadMarkersAsync();
+        Task SaveMarkersAsync();
         Task UpdateAutomarkerPositionFromGpsAsync();
         void ChangeMarkerColor();
         Task AddNewMarkerInsideViewArea(RectLatLng viewArea);

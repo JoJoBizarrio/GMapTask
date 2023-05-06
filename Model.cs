@@ -52,7 +52,7 @@ namespace GMapTask
             _gMarkerGoogleTypesArray = Enum.GetValues(typeof(GMarkerGoogleType));
         }
 
-        async public Task LoadMarkers()
+        async public Task LoadMarkersAsync()
         {
             using (SqlConnection MySqlConnection = new SqlConnection("Data Source=DESKTOP-61HUL4I;Initial Catalog=VehiclesPositions;Integrated Security=True"))
             {
@@ -73,7 +73,7 @@ namespace GMapTask
             }
         }
 
-        async public Task SaveMarkers()
+        async public Task SaveMarkersAsync()
         {
             using (SqlConnection MySqlConnection = new SqlConnection("Data Source=DESKTOP-61HUL4I;Initial Catalog=VehiclesPositions;Integrated Security=True"))
             {
